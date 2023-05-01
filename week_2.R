@@ -44,3 +44,29 @@ wildschwein |>
   geom_line()
 #timelags während des Tages grössser als in der Nacht -> Tiere schlafen dann, deshalb wurde Messung so eingestellt, dass insbesondere in der aktiven Zeit gemessen wird
 
+## Task3
+
+N1 <- 1204752
+N2 <- 1204863
+E1 <- 2570409
+E2 <- 2570402
+
+sqrt((E1-E2)^2+(N1-N2)^2)
+
+wildschwein <- wildschwein |> 
+  group_by(TierName) |>
+  mutate(steplength = sqrt((E-lead(E))^2+(N-lead(N))^2))
+
+hist(wildschwein$steplength, 100)
+hist(log10(wildschwein$steplength), 100)
+
+wildschwein <- wildschwein |> 
+  mutate(speed_ms = steplength/timelag)
+
+hist(wildschwein$speed_ms, 100)
+hist(log10(wildschwein$speed_ms), 100)
+
+#Die Einheit ist Meter/sekunde, weil ich Meter durch Sekunden teile
+
+
+
