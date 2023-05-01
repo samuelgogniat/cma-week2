@@ -242,7 +242,7 @@ ggplot(posmo)+
   coord_sf(datum=2056)+
   theme_bw()
 
-#einige Punkte weit weg verzerrt alles so sehr, das alltägliche Umgebung verloren geht:
+#einige Punkte weit weg. Verzerrt alles so sehr, das alltägliche Umgebung verloren geht:
 
 posmo |> 
   filter(datetime > "2023-04-27") |> 
