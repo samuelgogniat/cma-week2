@@ -194,4 +194,66 @@ caro |>
 
 #umso grösser das Fenster wird, umso stärker auch das "smoothing". D.h. die Peaks werden zunehmend kleiner.
 
+## Task7
 
+posmo <- read_delim("private/posmo_2023-01-01T00 00 00+01 00-2023-05-01T23 59 59+02 00.csv")
+posmo #mit long/lat
+posmo <- st_as_sf(posmo,coords = c("lon_x", "lat_y"),crs = 4326)
+posmo <- st_transform(posmo, 2056)
+posmo
+
+# Daten erkunden
+posmo$user_id |> unique() 
+#logischerweise nur die Daten von einem User (mir)
+
+posmo <- posmo |>
+  arrange(datetime) |> 
+  mutate(timelag = as.integer(difftime(lead(datetime), datetime, units="sec")))
+
+summary(posmo)
+#insgesamt 23'394 Messpunkte zwischen 2023-04-12 und 2023-04-30, timelag zwischen 0 und 98351s, im mittel aber nur 63.48
+
+ggplot(posmo, aes(timelag)) +  
+  geom_histogram(binwidth =1) +
+  lims(x = c(0,1000)) +
+  scale_y_log10()
+#timelag am in der Regel nur wenige Sekunden
+
+ggplot(posmo, aes(timelag)) +  
+  geom_histogram(binwidth =1) +
+  lims(x = c(0,25)) +
+  scale_y_log10()
+#ca. 5s
+
+  ggplot(posmo, aes(x=datetime, y=timelag))+
+  geom_point()+
+  geom_line()
+#Zeitabstände mit einer Ausnahme relativ regelmässig
+
+posmo |> 
+  filter(datetime > "2023-04-22") |> 
+  ggplot(aes(x=datetime, y=timelag))+
+    geom_point()+
+    geom_line()
+#in der Nacht grössere Zeitabstände, am Tag kleinere. Vermutlich weil Zuhause "gefenced"
+
+ggplot(posmo)+
+  geom_sf()+
+  coord_sf(datum=2056)+
+  theme_bw()
+
+#einige Punkte weit weg verzerrt alles so sehr, das alltägliche Umgebung verloren geht:
+
+posmo |> 
+  filter(datetime > "2023-04-27") |> 
+  ggplot()+
+  geom_sf()+
+  coord_sf(datum=2056)+
+  theme_bw()
+
+#ohne Hintergrundkarte noch nicht sehr aussagekräftig
+
+
+tmap_mode("view") 
+tm_shape(posmo)+
+  tm_dots()
