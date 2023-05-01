@@ -253,7 +253,6 @@ posmo |>
 
 #ohne Hintergrundkarte noch nicht sehr aussagekräftig
 
-
 tmap_mode("view") 
 tm_shape(posmo)+
   tm_dots()
