@@ -2,6 +2,7 @@ library(readr)
 library(dplyr)
 library(sf)
 library(ggplot2)
+library(tmap)
 
 ### Excercise2
 
@@ -68,5 +69,92 @@ hist(log10(wildschwein$speed_ms), 100)
 
 #Die Einheit ist Meter/sekunde, weil ich Meter durch Sekunden teile
 
+## Task4
 
+caro <- read_delim("caro60.csv")
+caro #KS noch nicht hinterlegt
+caro <- st_as_sf(caro, coords = c("E", "N"), crs = 2056, remove = FALSE)
+caro
 
+?slice()
+
+nrow(caro) #200 Datenpunkte
+
+seq3 <- seq(1,200, by=3)
+length(seq3)#67 Werte -> sollte stimmen
+seq6<- seq(1,200, by=6)
+seq9<- seq(1,200, by=9)
+
+caro_3 <- slice(caro, seq3)
+caro_6 <- slice(caro, seq6)
+caro_9 <- slice(caro, seq9)
+
+nrow(caro_3)
+nrow(caro_6)
+nrow(caro_9)#die Zahlen stimmen
+
+caro <- caro |>
+  mutate(timelag = as.integer(difftime(lead(DatetimeUTC), DatetimeUTC, units="sec"))) |>
+  mutate(steplength = sqrt((E-lead(E))^2+(N-lead(N))^2)) |> 
+  mutate(speed_ms = steplength/timelag)
+
+caro_3 <- caro_3 |>
+  mutate(timelag = as.integer(difftime(lead(DatetimeUTC), DatetimeUTC, units="sec"))) |>
+  mutate(steplength = sqrt((E-lead(E))^2+(N-lead(N))^2)) |> 
+  mutate(speed_ms = steplength/timelag)
+
+caro_6 <- caro_6 |>
+  mutate(timelag = as.integer(difftime(lead(DatetimeUTC), DatetimeUTC, units="sec"))) |>
+  mutate(steplength = sqrt((E-lead(E))^2+(N-lead(N))^2)) |> 
+  mutate(speed_ms = steplength/timelag)
+
+caro_9 <- caro_9 |>
+  mutate(timelag = as.integer(difftime(lead(DatetimeUTC), DatetimeUTC, units="sec"))) |>
+  mutate(steplength = sqrt((E-lead(E))^2+(N-lead(N))^2)) |> 
+  mutate(speed_ms = steplength/timelag)
+
+caro |> 
+  rbind(caro_3, caro_6, caro_9) |> 
+  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  na.omit() |> 
+  ggplot(aes(x=DatetimeUTC, y=speed_ms, color=timelag_min))+
+  geom_line(size=0.7)+
+  theme_bw()+
+  labs(x="Time",y="Speed (m/s)",color="Granularity")
+
+#Die Geschwindigkeit ist bei hoher Granularität (also kurzen Zeitabständen zwischen den Messpunkten) deutlich höher. 
+
+caro |> 
+  rbind(caro_3) |> 
+  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  na.omit() |> 
+  ggplot(aes(x=E, y=N, color=timelag_min,alpha=timelag_min))+
+  geom_point(size=2)+
+  geom_path(size=0.7) +
+  theme_bw()+
+  scale_alpha_manual(values=c(0.5,1))+
+  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+
+caro |> 
+  rbind(caro_6) |> 
+  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  na.omit() |> 
+  ggplot(aes(x=E, y=N, color=timelag_min,alpha=timelag_min))+
+  geom_point(size=2)+
+  geom_path(size=0.7) +
+  theme_bw()+
+  scale_alpha_manual(values=c(0.5,1))+
+  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+
+caro |> 
+  rbind(caro_9) |> 
+  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  na.omit() |> 
+  ggplot(aes(x=E, y=N, color=timelag_min, alpha=timelag_min))+
+  geom_point(size=2)+
+  geom_path(size=0.7) +
+  theme_bw()+
+  scale_alpha_manual(values=c(0.5,1))+
+  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+
+#Die Karten zeigen auf, dass der gemessene Weg mit zunehmenden Zeitabständen kleiner wird, da gewisse Umwege nicht mehr erfasst wurden. Dies erklärt auch wieso die Geschwindigkeit dann "tiefer" ist, da in der selben Zeit weniger Strecke zurückgelegt wurde. 
