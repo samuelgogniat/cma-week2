@@ -3,6 +3,7 @@ library(dplyr)
 library(sf)
 library(ggplot2)
 library(tmap)
+library(zoo)
 
 ### Excercise2
 
@@ -126,35 +127,71 @@ caro |>
 
 caro |> 
   rbind(caro_3) |> 
-  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  mutate(Trajectory = paste0(timelag/60, " min")) |> 
   na.omit() |> 
-  ggplot(aes(x=E, y=N, color=timelag_min,alpha=timelag_min))+
+  ggplot(aes(x=E, y=N, color=Trajectory,alpha=Trajectory))+
   geom_point(size=2)+
   geom_path(size=0.7) +
   theme_bw()+
   scale_alpha_manual(values=c(0.5,1))+
-  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+  labs(title="Comparing original- with 3 minutes-resampled data")
 
 caro |> 
   rbind(caro_6) |> 
-  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  mutate(Trajectory = paste0(timelag/60, " min")) |> 
   na.omit() |> 
-  ggplot(aes(x=E, y=N, color=timelag_min,alpha=timelag_min))+
+  ggplot(aes(x=E, y=N, color=Trajectory,alpha=Trajectory))+
   geom_point(size=2)+
   geom_path(size=0.7) +
   theme_bw()+
   scale_alpha_manual(values=c(0.5,1))+
-  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+  labs(title="Comparing original- with 3 minutes-resampled data")
 
 caro |> 
   rbind(caro_9) |> 
-  mutate(timelag_min = paste0(timelag/60, " min")) |> 
+  mutate(Trajectory = paste0(timelag/60, " min")) |> 
   na.omit() |> 
-  ggplot(aes(x=E, y=N, color=timelag_min, alpha=timelag_min))+
+  ggplot(aes(x=E, y=N, color=Trajectory, alpha=Trajectory))+
   geom_point(size=2)+
   geom_path(size=0.7) +
   theme_bw()+
   scale_alpha_manual(values=c(0.5,1))+
-  labs(color="Trajectory", alpha="Trajectory", title="Comparing original- with 3 minutes-resampled data")
+  labs(title="Comparing original- with 3 minutes-resampled data")
 
 #Die Karten zeigen auf, dass der gemessene Weg mit zunehmenden Zeitabständen kleiner wird, da gewisse Umwege nicht mehr erfasst wurden. Dies erklärt auch wieso die Geschwindigkeit dann "tiefer" ist, da in der selben Zeit weniger Strecke zurückgelegt wurde. 
+
+
+## Task5
+
+example <- rnorm(10)
+example
+?rollmean()
+rollmean(example, k = 3, fill = NA, align = "left")
+rollmean(example, k = 4, fill = NA, align = "left")
+
+
+caro_k3 <- caro |> 
+  mutate(speed_ms = rollmean(speed_ms, k=3, fill=NA, align="left")) |> 
+  mutate(k = "3k")
+caro_k4 <- caro |> 
+  mutate(speed_ms = rollmean(speed_ms, k=4, fill=NA, align="left")) |> 
+  mutate(k = "4k")
+caro_k5 <- caro |> 
+  mutate(speed_ms = rollmean(speed_ms, k=5, fill=NA, align="left")) |> 
+  mutate(k = "5k")
+caro_k10 <- caro |> 
+  mutate(speed_ms = rollmean(speed_ms, k=10, fill=NA, align="left")) |> 
+  mutate(k = "10k")
+
+caro |> 
+  mutate(k = "none") |> 
+  rbind(caro_k4, caro_k5, caro_k10) |> 
+  ggplot(aes(x=DatetimeUTC, y=speed_ms, color=k))+
+  geom_line(size=0.7)+
+  theme_bw()+
+  labs(x="Time",y="Speed (m/s)",color="Window")
+
+
+#umso grösser das Fenster wird, umso stärker auch das "smoothing". D.h. die Peaks werden zunehmend kleiner.
+
+
